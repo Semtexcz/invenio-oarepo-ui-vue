@@ -121,9 +121,12 @@ class CollectionModule extends VuexModule {
         const flattenedAggregations = {}
         Object.entries(aggregations).forEach(([key, val]) => {
             const value = val
-
+            const flattened = this.callFacetHandler('flatten', flattenedAggregations, key, val, queryParams, this.flatten)
+            if (flattened) {
+                return
+            }
             if (key !== 'doc_count') {
-                if (value.buckets !== undefined) {
+                if (value.buckets !== undefined && value.buckets.length > 0 && value.buckets[0].key !== undefined) {
                     value.label = valueTranslator(key, {
                         type: 'facet'
                     })
@@ -258,6 +261,7 @@ class CollectionModule extends VuexModule {
             bucket
         }
     ) {
+        console.log('SELECT')
         if (!this.callFacetHandler('facetSelected', facet, key, bucket)) {
             key = this.callFacetHandler('facetKey', facet, key, bucket) || key
             const router = this.getRouter()
@@ -284,7 +288,9 @@ class CollectionModule extends VuexModule {
             bucket
         }
     ) {
+        console.log('DESELECT')
         if (!this.callFacetHandler('facetDeselected', facet, key, bucket)) {
+            console.log('DESELECT-INSIDE-IF')
             key = this.callFacetHandler('facetKey', facet, key, bucket) || key
             const router = this.getRouter()
             const q = new Query(router.currentRoute.query)
